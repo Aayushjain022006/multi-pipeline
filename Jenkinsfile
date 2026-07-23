@@ -1,26 +1,18 @@
-pipeline {                                          
-    agent any                                       
-    parameters {                                    
-        choice(name: 'ENV', choices: ['a','b'])    
-    }
-    stages {                                      
-        stage('Build') {                        
-            steps {                               
-                sh "echo Building for ${params.ENV}" 
+pipeline {
+    agent any
+    parameters { choice(name: 'ENVIRONMENT', choices: ['staging', 'production'], description: 'Target') }
+    stages {
+        stage('Build') { steps { sh 'echo Building' } }
+        stage('Tests') {
+            parallel {
+                stage('Unit') { steps { sh 'echo Unit tests' } }
+                stage('Integration') { steps { sh 'echo Integration tests' } }
             }
         }
-        stage('Deploy') {
-            when {                                 
-                expression { params.ENV == 'b' }   
-            }
-            steps {
-                sh 'echo Deploying'                
-            }
+        stage('Approve') {
+            when { expression { params.ENVIRONMENT == 'production' } }
+            steps { input message: 'Deploy to production?' }
         }
-    }
-    post {                                          
-        success {
-            echo 'Done'
-        }
+        stage('Deploy') { steps { sh "echo Deploying to ${params.ENVIRONMENT}" } }
     }
 }
