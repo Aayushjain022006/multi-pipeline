@@ -14,40 +14,44 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building application...'
+                sh 'echo Build completed'
             }
         }
 
-        stage('Tests') {
-            parallel {
-
-                stage('Unit Tests') {
-                    steps {
-                        sh 'echo Running Unit Tests'
-                    }
-                }
-
-                stage('Integration Tests') {
-                    steps {
-                        sh 'echo Running Integration Tests'
-                    }
-                }
-
+        stage('Test') {
+            steps {
+                sh 'echo Running Tests...'
+                sh 'echo Tests Passed'
             }
         }
 
+        stage('Approve') {
+            when {
+                expression { params.ENVIRONMENT == 'production' }
+            }
+            steps {
+                input message: 'Deploy to Production?'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh "echo Deploying to ${params.ENVIRONMENT}"
+            }
+        }
     }
 
     post {
-        always {
-            echo 'Pipeline execution completed.'
-        }
-
         success {
-            echo 'Build Successful!'
+            echo 'Pipeline completed successfully!'
         }
 
         failure {
-            echo 'Build Failed!'
+            echo 'Pipeline failed!'
+        }
+
+        always {
+            echo 'Cleaning workspace...'
         }
     }
 }
